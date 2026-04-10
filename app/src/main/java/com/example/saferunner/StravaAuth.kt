@@ -10,16 +10,16 @@ object StravaAuth {
 
     val clientId = BuildConfig.STRAVA_CLIENT_ID
     val clientSecret = BuildConfig.STRAVA_CLIENT_SECRET
-    private const val REDIRECT_URI = "saferunner://callback"
+    val redirectUri = "https://saferunner.app/callback"
     private const val SCOPE = "activity:read_all"
 
     fun getAuthUrl(): String {
         return "https://www.strava.com/oauth/mobile/authorize" +
                 "?client_id=$clientId" +
-                "&redirect_uri=${Uri.encode(REDIRECT_URI)}" +
+                "&redirect_uri=$redirectUri" +
                 "&response_type=code" +
                 "&approval_prompt=auto" +
-                "&scope=$SCOPE"
+                "&scope=activity:read_all"
     }
 
     fun openAuthPage(context: Context) {
