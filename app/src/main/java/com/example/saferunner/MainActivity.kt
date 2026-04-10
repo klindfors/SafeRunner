@@ -1,5 +1,6 @@
 package com.example.saferunner
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,18 +18,34 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
+import com.example.saferunner.com.example.saferunner.StravaAuth
 import com.example.saferunner.ui.theme.SafeRunnerTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
             SafeRunnerTheme {
-                SafeRunnerApp()
+                LoginScreen(
+                    onConnectClick = {
+                        StravaAuth.openAuthPage(this)
+                    }
+                )
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        intent.data?.let { uri ->
+            if (uri.scheme == "saferunner" && uri.host == "callback") {
+                val code = uri.getQueryParameter("code")
+                if (code != null) {
+                    // We'll handle this next
+                    android.util.Log.d("SafeRunner", "Got auth code: $code")
+                }
             }
         }
     }
