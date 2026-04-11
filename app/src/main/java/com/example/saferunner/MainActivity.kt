@@ -1,10 +1,11 @@
 package com.example.saferunner
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
@@ -20,12 +21,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
-import com.example.saferunner.com.example.saferunner.StravaAuth
 import com.example.saferunner.ui.theme.SafeRunnerTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Handle intent if the app was started via a deep link
+        handleIntent(intent)
+
         setContent {
             SafeRunnerTheme {
                 LoginScreen(
@@ -39,12 +43,17 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        intent.data?.let { uri ->
+        setIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        intent?.data?.let { uri ->
             if (uri.scheme == "saferunner" && uri.host == "callback") {
                 val code = uri.getQueryParameter("code")
                 if (code != null) {
-                    // We'll handle this next
-                    android.util.Log.d("SafeRunner", "Got auth code: $code")
+                    Log.d("SafeRunner", "Got auth code: $code")
+                    // Process the code here (e.g., exchange for token)
                 }
             }
         }

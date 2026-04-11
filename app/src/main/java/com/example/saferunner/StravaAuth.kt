@@ -1,5 +1,4 @@
-package com.example.saferunner.com.example.saferunner
-
+package com.example.saferunner
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -10,7 +9,7 @@ object StravaAuth {
 
     val clientId = BuildConfig.STRAVA_CLIENT_ID
     val clientSecret = BuildConfig.STRAVA_CLIENT_SECRET
-    val redirectUri = "https://saferunner.app/callback"
+    private const val redirectUri = "https://kimlindfors.se/callback"
     private const val SCOPE = "activity:read_all"
 
     fun getAuthUrl(): String {
@@ -19,7 +18,7 @@ object StravaAuth {
                 "&redirect_uri=$redirectUri" +
                 "&response_type=code" +
                 "&approval_prompt=auto" +
-                "&scope=activity:read_all"
+                "&scope=$SCOPE"
     }
 
     fun openAuthPage(context: Context) {
