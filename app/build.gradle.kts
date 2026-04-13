@@ -1,11 +1,16 @@
-import org.gradle.kotlin.dsl.implementation
-
+import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
 
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
 
 
 android {
@@ -71,5 +76,6 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.retrofit.moshi)
     implementation(libs.moshi.kotlin)
+    ksp(libs.moshi.codegen)
 
 }
