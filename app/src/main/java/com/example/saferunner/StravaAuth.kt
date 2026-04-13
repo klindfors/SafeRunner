@@ -1,9 +1,15 @@
 package com.example.saferunner
+
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import com.example.saferunner.BuildConfig
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URL
+
 
 object StravaAuth {
 

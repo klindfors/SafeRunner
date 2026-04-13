@@ -41,6 +41,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -68,6 +69,7 @@ dependencies {
     ksp(libs.room.compiler)
     implementation(libs.browser)
     implementation(libs.lifecycle.viewmodel.compose)
-
+    implementation(libs.retrofit.moshi)
+    implementation(libs.moshi.kotlin)
 
 }
