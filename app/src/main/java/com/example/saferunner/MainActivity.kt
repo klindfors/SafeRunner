@@ -48,13 +48,17 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent?) {
+        //extra logging
+        Log.d("SafeRunner", "handleIntent() called")
+        Log.d("SafeRunner", "Intent: $intent")
+        Log.d("SafeRunner", "Intent data: ${intent?.data}")
         intent?.data?.let { uri ->
             if (uri.scheme == "saferunner" && uri.host == "callback") {
                 val code = uri.getQueryParameter("code")
                 if (code != null) {
                     Log.d("SafeRunner", "Got auth code: $code")
-                    // Process the code here (e.g., exchange for token)
-                }
+                    } else {
+                        Log.e("SafeRunner", "No authorization code received") }
             }
         }
     }
