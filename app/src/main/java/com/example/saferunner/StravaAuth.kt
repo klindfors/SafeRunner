@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
+import com.squareup.moshi.Moshi
 
 object StravaAuth {
 
@@ -80,9 +81,12 @@ object StravaAuth {
                         .bufferedReader()
                         .use { it.readText() }
 
-                    Log.d("SafeRunner", "Token response: $response")
+                    Log.d("SafeRunner", "Token response: received")
 
-                    null
+                    val moshi = Moshi.Builder().build()
+                    val adapter = moshi.adapter(StravaToken::class.java)
+
+                    return@withContext adapter.fromJson(response)
                 } else {
                     val error = connection.errorStream
                         ?.bufferedReader()

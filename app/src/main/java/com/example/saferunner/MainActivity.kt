@@ -61,7 +61,13 @@ class MainActivity : ComponentActivity() {
                     Log.d("SafeRunner", "Got auth code: $code")
 
                     lifecycleScope.launch {
-                        StravaAuth.exchangeCodeForToken(code)
+                        val token = StravaAuth.exchangeCodeForToken(code)
+
+                        if (token != null) {
+                            Log.d("SafeRunner", "Strava token received successfully")
+                        } else {
+                            Log.e("SafeRunner", "Failed to parse Strava token")
+                        }
                     }}else {
                         Log.e("SafeRunner", "No authorization code received") }
             }
