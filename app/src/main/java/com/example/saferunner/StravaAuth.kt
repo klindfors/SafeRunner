@@ -3,7 +3,12 @@ package com.example.saferunner
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.provider.ContactsContract.CommonDataKinds.Website.URL
 import android.util.Log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URL
 
 object StravaAuth {
 
@@ -41,6 +46,56 @@ object StravaAuth {
             Log.d(TAG, "Activity started successfully")
         } catch (e: Exception) {
             Log.e(TAG, "Error opening browser: ${e.message}")
+        }
+    }
+
+    suspend fun exchangeCodeForToken(code: String): StravaToken? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val url = URL("https://www.strava.com/oauth/token")
+                val connection = url.openConnection() as HttpURLConnection
+
+                connection.requestMethod = "POST"
+                connection.doOutput = true
+                connection.setRequestProperty(
+                    "Content-Type",
+                    "application/x-www-form-urlencoded"
+                )
+
+                val body = "client_id=$clientId" +
+                        "&client_secret=$clientSecret" +
+                        "&code=$code" +
+                        "&grant_type=authorization_code"
+
+                connection.outputStream.use { output ->
+                    output.write(body.toByteArray())
+                }
+
+                val responseCode = connection.responseCode
+
+                Log.d("SafeRunner", "Token response code: $responseCode")
+
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    val response = connection.inputStream
+                        .bufferedReader()
+                        .use { it.readText() }
+
+                    Log.d("SafeRunner", "Token response: $response")
+
+                    null
+                } else {
+                    val error = connection.errorStream
+                        ?.bufferedReader()
+                        ?.use { it.readText() }
+
+                    Log.e("SafeRunner", "Token exchange failed: $error")
+                    null
+                }
+
+            } catch (e: Exception) {
+                Log.e("SafeRunner", "Token exchange error", e)
+                null
+            }
         }
     }
 }

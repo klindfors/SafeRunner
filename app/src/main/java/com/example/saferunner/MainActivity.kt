@@ -21,7 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
+import androidx.lifecycle.lifecycleScope
 import com.example.saferunner.ui.theme.SafeRunnerTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,7 +59,10 @@ class MainActivity : ComponentActivity() {
                 val code = uri.getQueryParameter("code")
                 if (code != null) {
                     Log.d("SafeRunner", "Got auth code: $code")
-                    } else {
+
+                    lifecycleScope.launch {
+                        StravaAuth.exchangeCodeForToken(code)
+                    }}else {
                         Log.e("SafeRunner", "No authorization code received") }
             }
         }
