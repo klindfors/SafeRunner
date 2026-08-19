@@ -1,4 +1,6 @@
 import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -7,19 +9,13 @@ plugins {
 
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
-
 if (localPropertiesFile.exists()) {
-    localProperties.load(localPropertiesFile.inputStream())
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
 }
-
 
 android {
     namespace = "com.example.saferunner"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.saferunner"
@@ -29,6 +25,18 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // fetching keys from local properties if they exist
+        val stravaId = localProperties.getProperty("strava.client.id") 
+            ?: localProperties.getProperty("STRAVA_CLIENT_ID") 
+            ?: ""
+            
+        val stravaSecret = localProperties.getProperty("strava.client.secret") 
+            ?: localProperties.getProperty("STRAVA_CLIENT_SECRET") 
+            ?: ""
+        
+        buildConfigField("String", "STRAVA_CLIENT_ID", "\"$stravaId\"")
+        buildConfigField("String", "STRAVA_CLIENT_SECRET", "\"$stravaSecret\"")
     }
 
     buildTypes {
@@ -77,5 +85,4 @@ dependencies {
     implementation(libs.retrofit.moshi)
     implementation(libs.moshi.kotlin)
     ksp(libs.moshi.codegen)
-
 }

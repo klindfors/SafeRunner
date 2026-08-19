@@ -4,40 +4,43 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
-import com.example.saferunner.BuildConfig
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.net.HttpURLConnection
-import java.net.URL
-
 
 object StravaAuth {
 
-    val clientId = BuildConfig.STRAVA_CLIENT_ID
-    val clientSecret = BuildConfig.STRAVA_CLIENT_SECRET
-    private const val redirectUri = "https://kimlindfors.se/callback"
+    private const val TAG = "SafeRunner"
+    private val clientId = BuildConfig.STRAVA_CLIENT_ID
+    private val clientSecret = BuildConfig.STRAVA_CLIENT_SECRET
+    private const val REDIRECT_URI = "https://kimlindfors.se/callback"
     private const val SCOPE = "activity:read_all"
 
     fun getAuthUrl(): String {
-        return "https://www.strava.com/oauth/mobile/authorize" +
-                "?client_id=$clientId" +
-                "&redirect_uri=$redirectUri" +
-                "&response_type=code" +
-                "&approval_prompt=auto" +
-                "&scope=$SCOPE"
+        return Uri.parse("https://www.strava.com/oauth/mobile/authorize")
+            .buildUpon()
+            .appendQueryParameter("client_id", clientId)
+            .appendQueryParameter("redirect_uri", REDIRECT_URI)
+            .appendQueryParameter("response_type", "code")
+            .appendQueryParameter("approval_prompt", "auto")
+            .appendQueryParameter("scope", SCOPE)
+            .build()
+            .toString()
     }
 
     fun openAuthPage(context: Context) {
         val url = getAuthUrl()
-        Log.d("SafeRunner", "Opening URL: $url")
-        val uri = Uri.parse(url)
-        val intent = Intent(Intent.ACTION_VIEW, uri)
-        try {
-            context.startActivity(intent)
-            Log.d("SafeRunner", "Activity started successfully")
-        } catch (e: Exception) {
-            Log.e("SafeRunner", "Error opening browser: ${e.message}")
+        Log.d(TAG, "Opening URL: $url")
+        
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+            //ensuring that we may start the activity from a non-activity context if needed
+            if (context !is android.app.Activity) {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
         }
 
+        try {
+            context.startActivity(intent)
+            Log.d(TAG, "Activity started successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error opening browser: ${e.message}")
+        }
     }
 }
