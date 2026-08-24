@@ -1,10 +1,11 @@
-package com.example.saferunner
+package com.example.saferunner.data
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.provider.ContactsContract.CommonDataKinds.Website.URL
 import android.util.Log
+import com.example.saferunner.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
@@ -37,7 +38,7 @@ object StravaAuth {
         
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
             //ensuring that we may start the activity from a non-activity context if needed
-            if (context !is android.app.Activity) {
+            if (context !is Activity) {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
         }

@@ -1,7 +1,6 @@
 package com.example.saferunner
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -22,23 +21,32 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.lifecycle.lifecycleScope
+import com.example.saferunner.data.StravaAuth
+import com.example.saferunner.data.StravaTokenStorage
+import com.example.saferunner.ui.LoginScreen
 import com.example.saferunner.ui.theme.SafeRunnerTheme
 import kotlinx.coroutines.launch
+
+private var stravaConnected by mutableStateOf(false)
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Handle intent if the app was started via a deep link
+
+
+        //handle intent if the app was started via a deep link
         handleIntent(intent)
 
         setContent {
             SafeRunnerTheme {
                 LoginScreen(
+                    stravaConnected = stravaConnected,
                     onConnectClick = {
                         StravaAuth.openAuthPage(this)
                     }
                 )
+
             }
         }
     }
@@ -64,7 +72,9 @@ class MainActivity : ComponentActivity() {
                         val token = StravaAuth.exchangeCodeForToken(code)
 
                         if (token != null) {
-                            Log.d("SafeRunner", "Strava token received successfully")
+                            StravaTokenStorage.save(this@MainActivity, token)
+                            stravaConnected = true
+                            Log.d("SafeRunner", "Strava token saved successfully")
                         } else {
                             Log.e("SafeRunner", "Failed to parse Strava token")
                         }
