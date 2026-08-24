@@ -1,5 +1,6 @@
-package com.example.saferunner
+package com.example.saferunner.ui
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun LoginScreen(onConnectClick: () -> Unit) {
+fun LoginScreen(onConnectClick: () -> Unit, stravaConnected: Boolean) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -42,22 +43,31 @@ fun LoginScreen(onConnectClick: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = {
-                    android.util.Log.d("SafeRunner", "Button clicked")
-                    onConnectClick()
-                    },
-                modifier = Modifier
-                    .fillMaxWidth(0.7f)
-                    .height(52.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFC4C02) // Strava orange
-                )
-            ) {
+            if (stravaConnected) {
                 Text(
-                    text = "Connect with Strava",
-                    fontWeight = FontWeight.SemiBold
+                    text = "✓ Connected to Strava",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
                 )
+            } else {
+                Button(
+                    onClick = {
+                        Log.d("SafeRunner", "Button clicked")
+                        onConnectClick()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth(0.7f)
+                        .height(52.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFC4C02)
+                    )
+                ) {
+                    Text(
+                        text = "Connect with Strava",
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
         }
     }
