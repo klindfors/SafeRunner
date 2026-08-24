@@ -1,46 +1,48 @@
 package com.example.saferunner.datastructures;
 
-import android.os.Build;
+// Feel free to use packages in your own environment, but remember to remove when handing it in
 
-import androidx.annotation.RequiresApi;
+//RedBlackTree class
+//
+//CONSTRUCTION: with no parameters
+//
+//******************PUBLIC OPERATIONS*********************
+//void insert( x )       --> Insert x
+//void remove( x )       --> Remove x (unimplemented)
+//boolean contains( x )  --> Return true if x is found
+//Comparable findMin( )  --> Return smallest item
+//Comparable findMax( )  --> Return largest item
+//boolean isEmpty( )     --> Return true if empty; else false
+//void makeEmpty( )      --> Remove all items
+//void printTree( )      --> Print all items
+//******************ERRORS********************************
+//Throws UnderflowException as appropriate
 
 import com.example.saferunner.data.Activity;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
-//CONSTRUCTION: with no parameters
-//
-//******************PUBLIC OPERATIONS*********************
-//void insert( x )       --> insert x
-//void remove( x )       --> remove x
-//boolean contains( x )  --> return true if x is found
-//comparable findMin( )  --> return smallest item
-//comparable findMax( )  --> return largest item
-//boolean isEmpty( )     --> return true if empty; else false
-//void makeEmpty( )      --> remove all items
-//void printTree( )      --> print all items
-//******************ERRORS********************************
-//throws UnderflowException as appropriate
-
 /**
- * implements a red-black tree. note that all "matching" is based on the
+ * Implements a red-black tree. Note that all "matching" is based on the
  * compareTo method.
  * <p>
- * modified with a working, but extremely inefficient implementation of remove,
- * and following checkstyles styleguide.
+ * Modified with a working, but extremely inefficient implementation of remove,
+ * and following Checkstyles styleguide.
  *
- * @author mark allen weiss
+ * @author Mark Allen Weiss
  */
 public class ActivityTree {
-    private static final int BLACK = 1; // black must be 1
+    private static final int BLACK = 1; // BLACK must be 1
     private static final int RED = 0;
 
     private RedBlackNode header;
     private RedBlackNode nullNode;
 
-    // used in insert routine and its helpers
+    // Used in insert routine and its helpers
     private RedBlackNode current;
     private RedBlackNode parent;
     private RedBlackNode grand;
@@ -49,7 +51,7 @@ public class ActivityTree {
     private int removalParentIndex;
 
     /**
-     * construct the tree.
+     * Construct the tree.
      */
     public ActivityTree() {
         nullNode = new RedBlackNode(null);
@@ -59,71 +61,78 @@ public class ActivityTree {
     }
 
     /**
-     * compare item and t.element, using compareTo, with caveat that if t is header,
-     * then item is always larger. this routine is called if is possible that t is
-     * header. if it is not possible for t to be header, use compareTo directly.
+     * Compare item and t.element, using compareTo, with caveat that if t is header,
+     * then item is always larger. This routine is called if is possible that t is
+     * header. If it is not possible for t to be header, use compareTo directly.
      */
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private int compare(Activity item, RedBlackNode t) {
+    private int compare(LocalDate date, RedBlackNode t) {
         if (t == header)
             return 1;
         else
-            return item.compareTo(t.element);
+            return date.compareTo(t.date);
     }
 
     /**
-     * insert into the tree.
+     * Insert into the tree.
      *
      * @param item the item to insert.
      */
-    @RequiresApi(api = Build.VERSION_CODES.O)
     public void insert(Activity item) {
-        current = parent = grand = header;
-        nullNode.element = item;
+        LocalDate date = getDate(item.getStartTime());
 
-        while (compare(item, current) != 0) {
+        current = parent = grand = header;
+        nullNode.date = date;
+
+        while (compare(date, current) != 0) {
             great = grand;
             grand = parent;
             parent = current;
-            current = compare(item, current) < 0 ? current.left : current.right;
+            current = compare(date, current) < 0 ? current.left : current.right;
 
-            // check if two red children; fix if so
+            // Check if two red children; fix if so
             if (current.left.color == RED && current.right.color == RED)
-                handleReorient(item);
+                handleReorient(date);
         }
 
-        // insertion fails if already present
-        if (current != nullNode)
+        if (current != nullNode) {
+            current.activities.add(item);
             return;
-        current = new RedBlackNode(item, nullNode, nullNode);
+        }
 
-        // attach to parent
-        if (compare(item, parent) < 0)
+        current = new RedBlackNode(date, nullNode, nullNode);
+        current.activities.add(item);
+
+        // Attach to parent
+        if (compare(date, parent) < 0)
             parent.left = current;
         else
             parent.right = current;
-        handleReorient(item);
+        handleReorient(date);
     }
 
     /**
-     * remove from the tree.
+     * Remove from the tree.
      * <p>
-     * the current version works, but is extremely inefficient since it copies the
-     * entire content for each remove operation. your job is to replace it with an
+     * The current version works, but is extremely inefficient since it copies the
+     * entire content for each remove operation. Your job is to replace it with an
      * efficient version that works on the tree directly.
      *
      * @param x the item to remove.
      */
-
-    @RequiresApi(Build.VERSION_CODES.O)
     public void remove(Activity x) {
-        if (!contains(x)) {
-            return;
-        }
+        LocalDate date = getDate(x.getStartTime());
 
-        removalPath = locate(x);
-        RedBlackNode node =
-                promoteSuccessor(removalPath.get(removalPath.size() - 1));
+        removalPath = locate(date);
+
+        RedBlackNode node = removalPath.get(removalPath.size() - 1);
+
+        if (node == nullNode || !node.activities.remove(x))
+            return;
+
+        if (!node.activities.isEmpty())
+            return;
+
+        node = promoteSuccessor(node);
 
         int nodeColor = node.color;
         RedBlackNode child = detach(node);
@@ -142,8 +151,7 @@ public class ActivityTree {
         rebalance(child);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private List<RedBlackNode> locate(Activity x) {
+    private List<RedBlackNode> locate(LocalDate date) {
         List<RedBlackNode> path = new ArrayList<>();
         path.add(header);
 
@@ -151,7 +159,7 @@ public class ActivityTree {
         while (node != nullNode) {
             path.add(node);
 
-            int comparison = x.compareTo(node.element);
+            int comparison = date.compareTo(node.date);
             if (comparison == 0) {
                 break;
             }
@@ -174,13 +182,13 @@ public class ActivityTree {
             removalPath.add(successor);
         }
 
-        node.element = successor.element;
+        node.date = successor.date;
+        node.activities = successor.activities;
         return successor;
     }
 
     private RedBlackNode detach(RedBlackNode node) {
-        RedBlackNode child =
-                node.left != nullNode ? node.left : node.right;
+        RedBlackNode child = node.left != nullNode ? node.left : node.right;
 
         removalParentIndex = removalPath.size() - 2;
         RedBlackNode nodeParent = removalPath.get(removalParentIndex);
@@ -267,7 +275,6 @@ public class ActivityTree {
             nodeParent.left = rotateWithRightChild(sibling);
             sibling = nodeParent.left;
         }
-
         sibling.color = nodeParent.color;
         nodeParent.color = BLACK;
         sibling.left.color = BLACK;
@@ -275,10 +282,7 @@ public class ActivityTree {
         return header.right;
     }
 
-    private void reattach(
-            RedBlackNode oldSubtreeRoot,
-            RedBlackNode newSubtreeRoot) {
-
+    private void reattach(RedBlackNode oldSubtreeRoot, RedBlackNode newSubtreeRoot) {
         RedBlackNode grandParent = removalPath.get(removalParentIndex - 1);
         if (grandParent == header) {
             header.right = newSubtreeRoot;
@@ -292,11 +296,11 @@ public class ActivityTree {
     }
 
     /**
-     * find the smallest item the tree.
+     * Find the smallest item the tree.
      *
      * @return the smallest item or throw UnderflowExcepton if empty.
      */
-    public Activity findMin() {
+    public LocalDate findMin() {
         if (isEmpty())
             throw new UnderflowException();
 
@@ -305,15 +309,15 @@ public class ActivityTree {
         while (itr.left != nullNode)
             itr = itr.left;
 
-        return itr.element;
+        return itr.date;
     }
 
     /**
-     * find the largest item the tree.
+     * Find the largest item in the tree.
      *
      * @return the largest item or throw UnderflowExcepton if empty.
      */
-    public Activity findMax() {
+    public LocalDate findMax() {
         if (isEmpty())
             throw new UnderflowException();
 
@@ -322,39 +326,43 @@ public class ActivityTree {
         while (itr.right != nullNode)
             itr = itr.right;
 
-        return itr.element;
+        return itr.date;
     }
 
     /**
-     * find an item in the tree.
+     * Find an item in the tree.
      *
      * @param x the item to search for.
      * @return true if x is found; otherwise false.
      */
-    @RequiresApi(Build.VERSION_CODES.O)
     public boolean contains(Activity x) {
-        nullNode.element = x;
-        current = header.right;
+        LocalDate date = getDate(x.getStartTime());
 
-        for (;;) {
-            if (x.compareTo(current.element) < 0)
-                current = current.left;
-            else if (x.compareTo(current.element) > 0)
-                current = current.right;
+        RedBlackNode node = header.right;
+
+        while (node != nullNode) {
+            int comparison = date.compareTo(node.date);
+
+            if (comparison < 0)
+                node = node.left;
+            else if (comparison > 0)
+                node = node.right;
             else
-                return current != nullNode;
+                return node.activities.contains(x);
         }
+
+        return false;
     }
 
     /**
-     * make the tree logically empty.
+     * Make the tree logically empty.
      */
     public void makeEmpty() {
         header.right = nullNode;
     }
 
     /**
-     * print the tree contents in sorted order.
+     * Print the tree contents in sorted order.
      */
     public void printTree() {
         if (isEmpty())
@@ -364,70 +372,20 @@ public class ActivityTree {
     }
 
     /**
-     * internal method to print a subtree in sorted order.
+     * Internal method to print a subtree in sorted order.
      *
      * @param t the node that roots the subtree.
      */
     private void printTree(RedBlackNode t) {
         if (t != nullNode) {
             printTree(t.left);
-            System.out.println(t.element);
+            System.out.println(t.date + ": " + t.activities);
             printTree(t.right);
         }
     }
 
     /**
-     * get all activities within a given date range.
-     *
-     * @param start the beginning of the date range.
-     * @param end the end of the date range.
-     * @return all activities within the given date range.
-     */
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    public List<Activity> getActivitiesBetween(Instant start, Instant end) {
-        List<Activity> activities = new ArrayList<>();
-        collectBetween(header.right, start, end, activities);
-        return activities;
-    }
-
-    /**
-     * collect activities within a given date range.
-     *
-     * @param node the current node.
-     * @param start the beginning of the date range.
-     * @param end the end of the date range.
-     * @param activities the list to add matching activities to.
-     */
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private void collectBetween(
-            RedBlackNode node,
-            Instant start,
-            Instant end,
-            List<Activity> activities) {
-
-        if (node == nullNode) {
-            return;
-        }
-
-        Instant activityTime = node.element.getStartTime();
-
-        if (activityTime.isAfter(start)) {
-            collectBetween(node.left, start, end, activities);
-        }
-
-        if (!activityTime.isBefore(start)
-                && !activityTime.isAfter(end)) {
-            activities.add(node.element);
-        }
-
-        if (activityTime.isBefore(end)) {
-            collectBetween(node.right, start, end, activities);
-        }
-    }
-
-    /**
-     * test if the tree is logically empty.
+     * Test if the tree is logically empty.
      *
      * @return true if empty, false otherwise.
      */
@@ -436,52 +394,106 @@ public class ActivityTree {
     }
 
     /**
-     * internal routine that is called during an insertion if a node has two red
-     * children. performs flip and rotations.
+     * Get all activities stored on a date.
+     *
+     * @param date the date to search for.
+     * @return all activities stored on the date.
+     */
+    public List<Activity> getActivitiesOnDate(LocalDate date) {
+        RedBlackNode node = header.right;
+
+        while (node != nullNode) {
+            int comparison = date.compareTo(node.date);
+
+            if (comparison < 0)
+                node = node.left;
+            else if (comparison > 0)
+                node = node.right;
+            else
+                return new ArrayList<>(node.activities);
+        }
+
+        return new ArrayList<>();
+    }
+
+    /**
+     * Get all activities stored between two dates.
+     *
+     * @param start the first date.
+     * @param end the last date.
+     * @return all activities stored between the dates.
+     */
+    public List<Activity> getActivitiesBetween(
+            LocalDate start,
+            LocalDate end) {
+
+        List<Activity> activities = new ArrayList<>();
+        collectBetween(header.right, start, end, activities);
+        return activities;
+    }
+
+    private void collectBetween(
+            RedBlackNode node,
+            LocalDate start,
+            LocalDate end,
+            List<Activity> activities) {
+
+        if (node == nullNode)
+            return;
+
+        if (node.date.isAfter(start))
+            collectBetween(node.left, start, end, activities);
+
+        if (!node.date.isBefore(start) && !node.date.isAfter(end))
+            activities.addAll(node.activities);
+
+        if (node.date.isBefore(end))
+            collectBetween(node.right, start, end, activities);
+    }
+
+    /**
+     * Internal routine that is called during an insertion if a node has two red
+     * children. Performs flip and rotations.
      *
      * @param item the item being inserted.
      */
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private void handleReorient(Activity item) {
-        // do the color flip
+    private void handleReorient(LocalDate item) {
+        // Do the color flip
         current.color = RED;
         current.left.color = BLACK;
         current.right.color = BLACK;
 
-        if (parent.color == RED) // have to rotate
+        if (parent.color == RED) // Have to rotate
         {
             grand.color = RED;
             if ((compare(item, grand) < 0) != (compare(item, parent) < 0))
-                parent = rotate(item, grand);
+                parent = rotate(item, grand); // Start dbl rotate
             current = rotate(item, great);
             current.color = BLACK;
         }
-        header.right.color = BLACK; // make root black
+        header.right.color = BLACK; // Make root black
     }
 
     /**
-     * internal routine that performs a single or double rotation. because the
-     * result is attached to the parent, there are four cases. called by
+     * Internal routine that performs a single or double rotation. Because the
+     * result is attached to the parent, there are four cases. Called by
      * handleReorient.
      *
      * @param item   the item in handleReorient.
      * @param parent the parent of the root of the rotated subtree.
      * @return the root of the rotated subtree.
      */
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private RedBlackNode rotate(Activity item, RedBlackNode parent) {
+    private RedBlackNode rotate(LocalDate item, RedBlackNode parent) {
         if (compare(item, parent) < 0)
-            return parent.left = compare(item, parent.left) < 0
-                    ? rotateWithLeftChild(parent.left)
-                    : rotateWithRightChild(parent.left);
+            return parent.left = compare(item, parent.left) < 0 ? rotateWithLeftChild(parent.left) : // LL
+                    rotateWithRightChild(parent.left); // LR
         else
-            return parent.right = compare(item, parent.right) < 0
-                    ? rotateWithLeftChild(parent.right)
-                    : rotateWithRightChild(parent.right);
+            return parent.right = compare(item, parent.right) < 0 ? rotateWithLeftChild(parent.right) : // RL
+                    rotateWithRightChild(parent.right); // RR
     }
 
     /**
-     * rotate binary tree node with left child.
+     * Rotate binary tree node with left child.
      */
     private RedBlackNode rotateWithLeftChild(RedBlackNode node) {
         RedBlackNode leftChild = node.left;
@@ -491,7 +503,7 @@ public class ActivityTree {
     }
 
     /**
-     * rotate binary tree node with right child.
+     * Rotate binary tree node with right child.
      */
     private RedBlackNode rotateWithRightChild(RedBlackNode node) {
         RedBlackNode rightChild = node.right;
@@ -500,23 +512,25 @@ public class ActivityTree {
         return rightChild;
     }
 
-    private static class RedBlackNode {
-        private Activity element;
-        private RedBlackNode left;
-        private RedBlackNode right;
-        private int color;
+    private LocalDate getDate(Instant startTime) {
+        return startTime.atZone(ZoneId.systemDefault()).toLocalDate();
+    }
 
-        // constructors
-        RedBlackNode(Activity theElement) {
-            this(theElement, null, null);
+    private static class RedBlackNode {
+        private LocalDate date;
+        private List<Activity> activities;
+        private RedBlackNode left; // Left child
+        private RedBlackNode right; // Right child
+        private int color; // Color
+
+        // Constructors
+        RedBlackNode(LocalDate date) {
+            this(date, null, null);
         }
 
-        RedBlackNode(
-                Activity theElement,
-                RedBlackNode lt,
-                RedBlackNode rt) {
-
-            element = theElement;
+        RedBlackNode(LocalDate date, RedBlackNode lt, RedBlackNode rt) {
+            this.date = date;
+            activities = new ArrayList<>();
             left = lt;
             right = rt;
             color = ActivityTree.BLACK;
@@ -524,7 +538,7 @@ public class ActivityTree {
 
         @Override
         public String toString() {
-            return element == null ? "NULL" : element.toString();
+            return date == null ? "NULL" : date.toString();
         }
     }
 }
